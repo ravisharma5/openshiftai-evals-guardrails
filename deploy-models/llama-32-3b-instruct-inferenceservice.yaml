@@ -1,0 +1,46 @@
+# Llama 3.2 3B Instruct InferenceService
+# This file deploys the Llama 3.2 3B Instruct model for text generation with GPU acceleration
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  annotations:
+    openshift.io/display-name: llama-3.2-3b-instruct
+    security.opendatahub.io/enable-auth: "true"
+    serving.kserve.io/deploymentMode: RawDeployment
+  labels:
+    networking.kserve.io/visibility: exposed
+    opendatahub.io/dashboard: "true"
+  name: llama-32-3b-instruct
+  namespace: models
+spec:
+  predictor:
+    automountServiceAccountToken: false
+    maxReplicas: 1
+    minReplicas: 1
+    model:
+      args:
+      - --dtype=half
+      - --max-model-len=20000
+      - --gpu-memory-utilization=0.95
+      - --enable-chunked-prefill
+      - --enable-auto-tool-choice
+      - --tool-call-parser=llama3_json
+      - --chat-template=/app/data/template/tool_chat_template_llama3.2_json.jinja
+      modelFormat:
+        name: vLLM
+      name: ""
+      resources:
+        limits:
+          cpu: "1"
+          memory: 4Gi
+          nvidia.com/gpu: "2"
+        requests:
+          cpu: "1"
+          memory: 4Gi
+          nvidia.com/gpu: "2"
+      runtime: llama-32-3b-instruct
+      storageUri: oci://quay.io/redhat-ai-services/modelcar-catalog:llama-3.2-3b-instruct
+    tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists

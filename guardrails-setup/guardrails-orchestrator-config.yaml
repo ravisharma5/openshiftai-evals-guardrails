@@ -1,0 +1,10 @@
+# Guardrails Orchestrator Configuration
+# This ConfigMap defines the container images for the guardrails orchestrator components
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guardrails-orchestrator-config
+  namespace: models
+data:
+  regexDetectorImage: quay.io/trustyai/regex-detector:latest
+  vllmGatewayImage: quay.io/trustyai/vllm-orchestrator-gateway:latest

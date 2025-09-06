@@ -1,0 +1,14 @@
+# Guardrails Orchestrator
+# This file deploys the TrustyAI Guardrails Orchestrator for content filtering and safety
+apiVersion: trustyai.opendatahub.io/v1alpha1
+kind: GuardrailsOrchestrator
+metadata:
+  name: guardrails-orchestrator
+  namespace: models
+spec:
+  enableBuiltInDetectors: true
+  enableGuardrailsGateway: true
+  guardrailsGatewayConfig: fms-orchestr8-config-gateway
+  orchestratorConfig: fms-orchestr8-config-nlp
+  otelExporter: {}
+  replicas: 1

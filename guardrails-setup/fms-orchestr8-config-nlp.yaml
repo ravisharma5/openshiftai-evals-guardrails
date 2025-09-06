@@ -1,0 +1,28 @@
+# FMS Orchestr8 NLP Configuration
+# This ConfigMap configures the NLP orchestrator with chat generation and detector services
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fms-orchestr8-config-nlp
+  namespace: models
+data:
+  config.yaml: |
+    chat_generation:
+      service:
+        hostname: llama-32-3b-instruct-predictor.models.svc.cluster.local
+        port: 8080
+    detectors:
+      regex_language:
+        type: text_contents
+        service:
+          hostname: "127.0.0.1"
+          port: 8080
+        chunker_id: whole_doc_chunker
+        default_threshold: 0.5
+      hap:
+        type: text_contents
+        service:
+          hostname: granite-guardian-hap-125m-predictor.models.svc.cluster.local
+          port: 8000
+        chunker_id: whole_doc_chunker
+        default_threshold: 0.5
