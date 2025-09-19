@@ -1,0 +1,139 @@
+apiVersion: trustyai.opendatahub.io/v1alpha1
+kind: LMEvalJob
+metadata:
+ name: custom-eval
+ namespace: models
+spec:
+ allowOnline: true
+ allowCodeExecution: true
+ model: local-completions
+ logSamples: true
+ modelArgs:
+    - name: model
+      value: llama-32-3b-instruct
+    - name: base_url
+      value: https://llama-32-3b-instruct-models.apps.cluster-rwjvd.rwjvd.sandbox1492.opentlc.com/v1/completions
+    - name: num_concurrent
+      value:  "1"
+    - name: max_retries
+      value:  "3"
+    - name: tokenized_requests
+      value: false
+    - name: tokenizer
+      value: llama-32-3b-instruct
+taskList:
+ taskRecipes:
+     - card:
+         custom: |
+           {
+               "__type__": "task_card",
+               "loader": {
+                   "__type__": "load_hf",
+                   "path": "OfirArviv/mt_bench_single_score_gpt4_judgement",
+                   "split": "train"
+               },
+               "preprocess_steps": [
+                   {
+                       "__type__": "rename_splits",
+                       "mapper": {
+                           "train": "test"
+                       }
+                   },
+                   {
+                       "__type__": "filter_by_condition",
+                       "values": {
+                           "turn": 1
+                       },
+                       "condition": "eq"
+                   },
+                   {
+                       "__type__": "filter_by_condition",
+                       "values": {
+                           "reference": "[]"
+                       },
+                       "condition": "eq"
+                   },
+                   {
+                       "__type__": "rename",
+                       "field_to_field": {
+                           "model_input": "question",
+                           "score": "rating",
+                           "category": "group",
+                           "model_output": "answer"
+                       }
+                   },
+                   {
+                       "__type__": "literal_eval",
+                       "field": "question"
+                   },
+                   {
+                       "__type__": "copy",
+                       "field": "question/0",
+                       "to_field": "question"
+                   },
+                   {
+                       "__type__": "literal_eval",
+                       "field": "answer"
+                   },
+                   {
+                       "__type__": "copy",
+                       "field": "answer/0",
+                       "to_field": "answer"
+                   }
+               ],
+               "task": "tasks.response_assessment.rating.single_turn",
+               "templates": [
+                   "templates.response_assessment.rating.mt_bench_single_turn"
+               ]
+           }
+       template:
+         ref: response_assessment.rating.mt_bench_single_turn
+       format: formats.models.openai.instruction
+       metrics:
+       - ref: llmaaj_metric
+   custom:
+     templates:
+       - name: response_assessment.rating.mt_bench_single_turn
+         value: |
+           {
+               "__type__": "input_output_template",
+               "instruction": "Please act as an impartial judge and evaluate the quality of the response provided by an AI assistant to the user question displayed below. Your evaluation should consider factors such as the helpfulness, relevance, accuracy, depth, creativity, and level of detail of the response. Begin your evaluation by providing a short explanation. Be as objective as possible. After providing your explanation, you must rate the response on a scale of 1 to 10 by strictly following this format: \"[[rating]]\", for example: \"Rating: [[5]]\".\n\n",
+               "input_format": "[Question]\n{question}\n\n[The Start of Assistant's Answer]\n{answer}\n[The End of Assistant's Answer]",
+               "output_format": "[[{rating}]]",
+               "postprocessors": [
+                   "processors.extract_mt_bench_rating_judgment"
+               ]
+           }
+     tasks:
+       - name: response_assessment.rating.single_turn
+         value: |
+           {
+               "__type__": "task",
+               "input_fields": {
+                   "question": "str",
+                   "answer": "str"
+               },
+               "outputs": {
+                   "rating": "float"
+               },
+               "metrics": [
+                   "metrics.spearman"
+               ]
+           }
+     metrics:
+       - name: llmaaj_metric
+         value: |
+           {
+               "__type__": "llm_as_judge",
+               "inference_model": {
+                   "__type__": "openai_completions",
+                   "model": "llama-32-3b-instruct",
+                   "base_url": "https://llama-32-3b-instruct-models.apps.cluster-rwjvd.rwjvd.sandbox1492.opentlc.com/v1/completions",
+                   "max_new_tokens": 256
+               },
+               "template": "templates.response_assessment.rating.mt_bench_single_turn",
+               "task": "response_assessment.rating.single_turn",
+               "format": "formats.models.openai.instruction",
+               "main_score": "llama_32_3b_instruct_openai_template_mt_bench_single_turn"
+           }
+

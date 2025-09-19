@@ -1,0 +1,84 @@
+---
+# ServingRuntime
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  annotations:
+    opendatahub.io/accelerator-name: ""
+    opendatahub.io/apiProtocol: REST
+    opendatahub.io/hardware-profile-name: migrated-gpu-mglzi-serving
+    opendatahub.io/recommended-accelerators: '["nvidia.com/gpu"]'
+    opendatahub.io/serving-runtime-scope: global
+    opendatahub.io/template-display-name: Hugging Face Detector ServingRuntime for KServe
+    opendatahub.io/template-name: guardrails-detector-huggingface-runtime
+    openshift.io/display-name: granite-guardian-hap-125m
+  labels:
+    opendatahub.io/dashboard: "true"
+  name: granite-guardian-hap-125m
+  namespace: models
+spec:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8080"
+  containers:
+  - args:
+    - --workers=1
+    - --host=0.0.0.0
+    - --port=8000
+    - --log-config=/common/log_conf.yaml
+    command:
+    - uvicorn
+    - app:app
+    env:
+    - name: MODEL_DIR
+      value: /mnt/models
+    - name: HF_HOME
+      value: /tmp/hf_home
+    image: quay.io/modh/odh-trustyai-hf-detector-runtime-rhel9@sha256:86316078a2d70ed2d754d683f0daedb76e632dd2b0588afa7713ce2a2a593e2f
+    name: kserve-container
+    ports:
+    - containerPort: 8000
+      protocol: TCP
+    volumeMounts:
+    - mountPath: /dev/shm
+      name: shm
+  multiModel: false
+  supportedModelFormats:
+  - autoSelect: true
+    name: guardrails-detector-hf-runtime
+  volumes:
+  - emptyDir:
+      medium: Memory
+      sizeLimit: 2Gi
+    name: shm
+---
+# InferenceService
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  annotations:
+    openshift.io/display-name: granite-guardian-hap-125m
+    serving.kserve.io/deploymentMode: RawDeployment
+  labels:
+    networking.kserve.io/visibility: exposed
+    opendatahub.io/dashboard: "true"
+  name: granite-guardian-hap-125m
+  namespace: models
+spec:
+  predictor:
+    automountServiceAccountToken: false
+    maxReplicas: 1
+    minReplicas: 1
+    model:
+      modelFormat:
+        name: guardrails-detector-hf-runtime
+      name: ""
+      resources:
+        limits:
+          cpu: "8"
+          memory: 10Gi
+        requests:
+          cpu: "4"
+          memory: 8Gi
+      runtime: granite-guardian-hap-125m
+      storageUri: oci://quay.io/ravirhsharma/granite-guardian-hap-125m:latest

@@ -7,22 +7,37 @@ metadata:
   namespace: models
 data:
   config.yaml: |
-    chat_generation:
+    chat_generation: 
       service:
         hostname: llama-32-3b-instruct-predictor.models.svc.cluster.local
         port: 8080
-    detectors:
+        insecure: true
+    detectors:       
       regex_language:
         type: text_contents
         service:
-          hostname: "127.0.0.1"
-          port: 8080
+            hostname: "127.0.0.1"
+            port: 8080
         chunker_id: whole_doc_chunker
         default_threshold: 0.5
       hap:
         type: text_contents
         service:
           hostname: granite-guardian-hap-125m-predictor.models.svc.cluster.local
+          port: 8000
+        chunker_id: whole_doc_chunker
+        default_threshold: 0.5
+      prompt_injection:
+        type: text_contents
+        service:
+          hostname: prompt-injection-predictor.models.svc.cluster.local
+          port: 8000
+        chunker_id: whole_doc_chunker
+        default_threshold: 0.5
+      gibberish_text_detector:
+        type: text_contents
+        service:
+          hostname: gibberish-text-detector-predictor.models.svc.cluster.local
           port: 8000
         chunker_id: whole_doc_chunker
         default_threshold: 0.5
