@@ -77,22 +77,6 @@ oc apply -f deploy-models/prompt-injection-deployment.yaml
 oc apply -f deploy-models/*-deployment.yaml
 ```
 
-### **Alternative: Individual Component Deployment**
-If you prefer to deploy serving runtimes and inference services separately:
-```bash
-# Deploy serving runtimes
-oc apply -f deploy-models/llama-32-3b-instruct-servingruntime.yaml
-oc apply -f deploy-models/granite-guardian-hap-125m-servingruntime.yaml
-oc apply -f deploy-models/gibberish-text-detector-servingruntime.yaml
-oc apply -f deploy-models/prompt-injection-servingruntime.yaml
-
-# Deploy inference services
-oc apply -f deploy-models/llama-32-3b-instruct-inferenceservice.yaml
-oc apply -f deploy-models/granite-guardian-hap-125m-inferenceservice.yaml
-oc apply -f deploy-models/gibberish-text-detector-inferenceservice.yaml
-oc apply -f deploy-models/prompt-injection-inferenceservice.yaml
-```
-
 ### **4. Deploy Guardrails Configuration**
 ```bash
 # Deploy configuration files
